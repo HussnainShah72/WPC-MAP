@@ -1,0 +1,94 @@
+<aside class="detail-drawer is-open facility-detail-panel">
+    <div class="detail-drawer-header facility-panel-header">
+        <div class="facility-panel-title-block">
+            <p class="drawer-eyebrow">Facility Detail</p>
+            <h2>{{ facility.name }}</h2>
+            <div class="badge-group facility-panel-badges">
+                <span class="soft-badge">{{ facility.get_facility_type_display }}</span>
+                <span class="status-pill status-{{ facility.status }}">{{ facility.get_status_display }}</span>
+            </div>
+        </div>
+        <button type="button" class="drawer-close" data-close-facility-panel aria-label="Close detail panel">Close</button>
+    </div>
+    <div class="detail-drawer-body facility-panel-body facility-panel-body-fixed">
+        <div class="detail-group">
+            <span class="detail-label">Program Acceptance</span>
+            <div class="badge-group">
+                {% for program in facility.programs.all %}
+                    <span class="soft-badge">{{ program.name }}</span>
+                {% empty %}
+                    <span class="muted-text">-</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="facility-panel-info-list">
+            <div class="facility-info-row">
+                <span class="facility-info-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-11a6 6 0 1 1 12 0c0 5.8-6 11-6 11Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                </span>
+                <div class="facility-info-copy">
+                    <span class="detail-label">Suburb</span>
+                    <p>{{ facility.suburb|default:"-" }}</p>
+                </div>
+            </div>
+
+            <div class="facility-info-row">
+                <span class="facility-info-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
+                </span>
+                <div class="facility-info-copy">
+                    <span class="detail-label">Spots Available</span>
+                    <p>{{ facility.spots }}</p>
+                </div>
+            </div>
+
+            <div class="facility-info-row">
+                <span class="facility-info-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"></path></svg>
+                </span>
+                <div class="facility-info-copy">
+                    <span class="detail-label">Orientation Required</span>
+                    <p>{{ facility.orientation_required|yesno:"Yes,No" }}</p>
+                </div>
+            </div>
+
+            <div class="facility-info-row">
+                <span class="facility-info-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m9 12 2 2 4-4"></path></svg>
+                </span>
+                <div class="facility-info-copy">
+                    <span class="detail-label">Geo Verified</span>
+                    <p>{{ facility.geo_verified|yesno:"Yes,No" }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if facility.quick_notes %}
+            <div class="detail-group facility-notes-card facility-notes-card-compact">
+                <span class="detail-label">Quick Notes</span>
+                <p>{{ facility.quick_notes }}</p>
+            </div>
+        {% endif %}
+
+        <div class="detail-summary-grid facility-summary-grid">
+            <div class="detail-group facility-summary-card">
+                <span class="detail-label">MOU</span>
+                <p>{{ facility.mou_complete|yesno:"Complete,Pending" }}</p>
+            </div>
+            <div class="detail-group facility-summary-card">
+                <span class="detail-label">Contacted</span>
+                <p>{{ facility.contacted_recently|yesno:"Recently,Not recently" }}</p>
+            </div>
+            <div class="detail-group facility-summary-card">
+                <span class="detail-label">Accepts Students</span>
+                <p>{{ facility.accepts_students|yesno:"Yes,No" }}</p>
+            </div>
+            <div class="detail-group facility-summary-card">
+                <span class="detail-label">Next Start</span>
+                <p>{{ facility.next_start|date:"d M Y"|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+    {% include "facilities/partials/facility_action_buttons.html" %}
+</aside>

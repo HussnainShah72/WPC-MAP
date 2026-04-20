@@ -1,0 +1,39 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Sign Up | WPC Map Clone{% endblock %}
+{% block auth_title %}Sign up{% endblock %}
+{% block auth_subtitle %}Create a new account{% endblock %}
+
+{% block auth_content %}
+<form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+    {% endif %}
+
+    <div class="form-field">
+        <label for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.password1.id_for_label }}">Password</label>
+        {{ form.password1 }}
+        {% for error in form.password1.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.password2.id_for_label }}">Repeat Password</label>
+        {{ form.password2 }}
+        {% for error in form.password2.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="auth-links">
+        <a href="{% url 'accounts:login' %}">Back to login</a>
+    </div>
+
+    <button type="submit" class="button-primary">Sign up</button>
+</form>
+{% endblock %}

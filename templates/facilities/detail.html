@@ -1,0 +1,27 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}{{ facility.name }} | WPC Map Clone{% endblock %}
+{% block page_title %}{{ facility.name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro facility-detail-page-intro">
+    <div>
+        <p class="section-subtitle">Full facility details, placement information, compliance notes, and contacts.</p>
+        <div class="badge-group facility-detail-title-badges">
+            <span class="soft-badge">{{ facility.get_facility_type_display }}</span>
+            <span class="status-pill status-{{ facility.status }}">{{ facility.get_status_display }}</span>
+        </div>
+    </div>
+    <div class="inline-actions">
+        <a href="{% url 'facilities:list' %}" class="button-secondary">Back to Facilities</a>
+        {% if app_perms.can_manage_facilities %}
+            <a href="{% url 'facilities:edit' facility.pk %}" class="button-secondary">Edit</a>
+        {% endif %}
+        {% if app_perms.can_delete_facilities %}
+            <a href="{% url 'facilities:delete' facility.pk %}" class="button-danger">Delete</a>
+        {% endif %}
+    </div>
+</section>
+
+{% include "facilities/partials/facility_detail_sections.html" %}
+{% endblock %}

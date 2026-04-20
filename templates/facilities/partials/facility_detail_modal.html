@@ -1,0 +1,35 @@
+<div class="facility-modal-card">
+    <div class="facility-modal-header">
+        <div>
+            <p class="drawer-eyebrow">Facility Details</p>
+            <h2>{{ facility.name }}</h2>
+            <div class="badge-group">
+                <span class="soft-badge">{{ facility.get_facility_type_display }}</span>
+                <span class="status-pill status-{{ facility.status }}">{{ facility.get_status_display }}</span>
+            </div>
+        </div>
+        <button type="button" class="drawer-close" data-close-facility-modal aria-label="Close details modal">Close</button>
+    </div>
+
+    <div class="facility-modal-body">
+        {% include "facilities/partials/facility_detail_sections.html" %}
+    </div>
+
+    <div class="facility-modal-footer">
+        {% if app_perms.can_manage_facilities %}
+            <a href="{% url 'facilities:edit' facility.pk %}" class="button-primary">Edit</a>
+        {% endif %}
+        {% if app_perms.can_delete_facilities %}
+            <button
+                type="button"
+                class="button-danger-outline"
+                data-delete-facility
+                data-delete-url="{% url 'facilities:delete' facility.pk %}"
+                data-facility-name="{{ facility.name }}"
+            >
+                Delete
+            </button>
+        {% endif %}
+    </div>
+</div>
+

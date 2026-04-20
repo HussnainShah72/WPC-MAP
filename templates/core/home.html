@@ -1,0 +1,278 @@
+{% extends "base_authenticated.html" %}
+{% load static %}
+
+{% block title %}WPC Map | WPC Map Clone{% endblock %}
+{% block page_title %}WPC Map{% endblock %}
+
+{% block extra_head %}
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+>
+{% endblock %}
+
+{% block content %}
+<section class="map-page">
+    <aside class="map-sidebar panel">
+        <div class="map-sidebar-header">
+            <div>
+                <p class="drawer-eyebrow">Facility Discovery</p>
+                <h2 class="map-sidebar-title">WPC Map</h2>
+                <p class="section-subtitle">Filter mapped placement facilities and inspect details directly from the map.</p>
+            </div>
+        </div>
+
+        <form method="get" class="map-filter-form" novalidate>
+            <div class="form-field">
+                <label for="{{ filter_form.q.id_for_label }}">Search</label>
+                {{ filter_form.q }}
+            </div>
+            <div class="form-field suburb-autocomplete-field" data-suburb-autocomplete>
+                <label for="{{ filter_form.suburb.id_for_label }}">Suburb</label>
+                {{ filter_form.suburb }}
+                <div class="suburb-suggestions" data-suburb-suggestions hidden></div>
+            </div>
+            <div class="form-field">
+                <label for="{{ filter_form.radius.id_for_label }}">Radius</label>
+                {{ filter_form.radius }}
+            </div>
+            <div class="form-field">
+                <label for="{{ filter_form.facility_type.id_for_label }}">Type</label>
+                {{ filter_form.facility_type }}
+            </div>
+            <div class="form-field">
+                <label for="{{ filter_form.status.id_for_label }}">Status</label>
+                {{ filter_form.status }}
+            </div>
+            <div class="map-filter-actions">
+                <button type="submit" class="button-primary">Apply Filters</button>
+                <a href="{{ reset_url }}" class="button-secondary">Reset View</a>
+            </div>
+        </form>
+
+        {% if radius_note %}
+            <div class="alert alert-info">{{ radius_note }}</div>
+        {% endif %}
+
+        <div class="map-results-meta">
+            <span class="count-badge">{{ results_count }} results</span>
+            <span class="sort-indicator">{{ sort_indicator }}</span>
+        </div>
+
+        <div class="map-filter-summary">
+            <p class="map-summary-line">{{ results_summary }}</p>
+            {% if radius_summary %}
+                <p class="map-summary-line map-summary-accent">{{ radius_summary }}</p>
+            {% endif %}
+        </div>
+
+        <div class="map-results-list" data-result-list>
+            {% for facility in facility_results %}
+                <button
+                    type="button"
+                    class="map-result-card"
+                    data-result-item
+                    data-facility-id="{{ facility.id }}"
+                >
+                    <span class="map-result-name">{{ facility.name }}</span>
+                    <span class="map-result-address">{{ facility.address }}</span>
+                    <span class="badge-group">
+                        <span class="soft-badge">{{ facility.type }}</span>
+                        <span class="status-pill status-{{ facility.status_key }}">{{ facility.status }}</span>
+                    </span>
+                </button>
+            {% empty %}
+                <div class="empty-state">
+                    <p>No mapped facilities match the current filters.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <section class="map-canvas-shell panel" data-facility-detail-root data-detail-endpoint-template="{% url 'facilities:detail_fragments' 999999 %}">
+        <div class="map-toolbar">
+            <span class="section-subtitle">Interactive map with OpenStreetMap and Leaflet</span>
+            <button type="button" class="button-secondary" data-reset-map>Reset View</button>
+        </div>
+        <div id="facility-map" class="facility-map"></div>
+
+        {% include "facilities/partials/facility_detail_shell.html" with shell_class="map-detail-shell" panel_class="map-detail-panel-slot" show_placeholder=False %}
+    </section>
+</section>
+
+{{ facility_results_json|json_script:"facility-map-data" }}
+{{ wa_suburbs|json_script:"wa-suburbs-data" }}
+{{ map_filter_state|json_script:"map-filter-state-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/facility-details.js' %}"></script>
+<script src="{% static 'js/map-suburb-autocomplete.js' %}"></script>
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+></script>
+<script>
+    (function () {
+        const dataElement = document.getElementById('facility-map-data');
+        const filterStateElement = document.getElementById('map-filter-state-data');
+        const mapElement = document.getElementById('facility-map');
+        const mapRoot = document.querySelector('.map-canvas-shell[data-facility-detail-root]');
+        if (!dataElement || !filterStateElement || !mapElement || !mapRoot || typeof L === 'undefined' || !window.WpcFacilityDetails) {
+            return;
+        }
+
+        const facilities = JSON.parse(dataElement.textContent);
+        const mapFilterState = JSON.parse(filterStateElement.textContent || '{}');
+        const resultItems = document.querySelectorAll('[data-result-item]');
+        const placeholder = mapRoot.querySelector('[data-facility-panel-slot]').innerHTML;
+        const controller = window.WpcFacilityDetails.createController({
+            root: mapRoot,
+            endpointTemplate: mapRoot.dataset.detailEndpointTemplate.replace('999999', '__id__'),
+            placeholderHtml: placeholder,
+            onOpen: function (activeId) {
+                resultItems.forEach(function (item) {
+                    item.classList.toggle('is-active', item.dataset.facilityId === String(activeId));
+                });
+            },
+            onClose: function () {
+                resultItems.forEach(function (item) {
+                    item.classList.remove('is-active');
+                });
+            }
+        });
+        const map = L.map(mapElement, {
+            zoomControl: true,
+        });
+        const defaultCenter = [-31.9505, 115.8605];
+        const bounds = [];
+        const markersById = new Map();
+        const resetMapButton = document.querySelector('[data-reset-map]');
+        let radiusCircle = null;
+
+        map.setView(defaultCenter, 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors',
+            referrerPolicy: 'strict-origin-when-cross-origin',
+        }).addTo(map);
+
+        function markerColor(statusKey) {
+            const colorMap = {
+                active_placements: '#16a34a',
+                upcoming_placements: '#2563eb',
+                previous_placements: '#64748b',
+                potential: '#d97706',
+                not_available: '#dc2626',
+            };
+            return colorMap[statusKey] || '#0f172a';
+        }
+
+        function markerIcon(statusKey) {
+            return L.divIcon({
+                className: 'leaflet-status-marker',
+                html: '<span class="leaflet-status-marker-dot" style="background:' + markerColor(statusKey) + '"></span>',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+                popupAnchor: [0, -12],
+            });
+        }
+
+        function popupHtml(facility) {
+            const websiteLine = facility.website ? 'Website: ' + facility.website + '<br>' : '';
+            const phoneLine = facility.phone ? 'Phone: ' + facility.phone + '<br>' : '';
+            return ''
+                + '<div class="map-popup">'
+                + '<strong>' + facility.name + '</strong><br>'
+                + facility.type + ' - ' + facility.status + '<br>'
+                + (facility.address || '-') + '<br>'
+                + phoneLine
+                + websiteLine
+                + '<em>Click marker for full details</em>'
+                + '</div>';
+        }
+
+        function applyActiveMapView() {
+            if (radiusCircle) {
+                map.fitBounds(radiusCircle.getBounds(), { padding: [30, 30] });
+            } else if (bounds.length) {
+                map.fitBounds(bounds, { padding: [30, 30] });
+            } else {
+                map.setView(defaultCenter, 11);
+            }
+        }
+
+        function drawRadiusCircle() {
+            const center = mapFilterState.suburb_center;
+            const radiusKm = mapFilterState.radius_km;
+
+            if (!center || !radiusKm) {
+                if (radiusCircle) {
+                    map.removeLayer(radiusCircle);
+                    radiusCircle = null;
+                }
+                return;
+            }
+
+            if (radiusCircle) {
+                map.removeLayer(radiusCircle);
+            }
+
+            radiusCircle = L.circle([center.latitude, center.longitude], {
+                radius: radiusKm * 1000,
+                color: '#f45d48',
+                weight: 2,
+                fillColor: '#f45d48',
+                fillOpacity: 0.12,
+            }).addTo(map);
+        }
+
+        function focusFacility(facilityId) {
+            const marker = markersById.get(String(facilityId));
+            if (!marker) {
+                return;
+            }
+            map.setView(marker.getLatLng(), Math.max(map.getZoom(), 14), { animate: true });
+            marker.openPopup();
+            controller.openById(facilityId);
+        }
+
+        facilities.forEach(function (facility) {
+            const latLng = [facility.latitude, facility.longitude];
+            const marker = L.marker(latLng, { icon: markerIcon(facility.status_key) }).addTo(map);
+            bounds.push(latLng);
+            marker.bindPopup(popupHtml(facility));
+            marker.on('mouseover', function () {
+                marker.openPopup();
+            });
+            marker.on('mouseout', function () {
+                marker.closePopup();
+            });
+            marker.on('click', function () {
+                focusFacility(facility.id);
+            });
+            markersById.set(String(facility.id), marker);
+        });
+
+        drawRadiusCircle();
+        applyActiveMapView();
+
+        resultItems.forEach(function (item) {
+            item.addEventListener('click', function () {
+                focusFacility(item.dataset.facilityId);
+            });
+        });
+
+        if (resetMapButton) {
+            resetMapButton.addEventListener('click', function () {
+                applyActiveMapView();
+            });
+        }
+    }());
+</script>
+{% endblock %}
+

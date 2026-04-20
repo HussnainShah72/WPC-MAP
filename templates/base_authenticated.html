@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>{% block title %}WPC Map Clone{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=phase1">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-topbar">
+            <div class="app-topbar-inner">
+                <div class="app-branding">
+                    <a class="brand" href="{% url 'core:home' %}">
+                        <span class="brand-mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 3L20 8V16L12 21L4 16V8L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                <path d="M12 7.5L16 10V14L12 16.5L8 14V10L12 7.5Z" fill="currentColor" opacity="0.22"/>
+                            </svg>
+                        </span>
+                        <span class="brand-text">WPC Map</span>
+                    </a>
+                </div>
+                <div class="app-topbar-actions">
+                    <nav class="nav">
+                        <a href="{% url 'facilities:list' %}"{% if request.path|slice:":12" == '/facilities/' %} class="is-active"{% endif %}>Facilities</a>
+                        {% if app_perms.can_manage_user_access %}
+                            <a href="{% url 'core_admin:dashboard' %}"{% if request.path|slice:":13" == '/panel/admin/' %} class="is-active"{% endif %}>Admin</a>
+                        {% endif %}
+                    </nav>
+                    {% if request.user.is_authenticated %}
+                        {% with user_name=request.user.get_full_name|default:request.user.email %}
+                            <div class="topbar-menu" data-topbar-menu>
+                                <div class="user-summary-compact">
+                                    <span class="role-badge role-{{ app_perms.role|default:'viewer' }}">{{ app_perms.role|default:'viewer'|title }}</span>
+                                    <button type="button" class="user-avatar user-avatar-button" aria-label="Open user menu" aria-expanded="false" aria-haspopup="true" data-topbar-menu-toggle>
+                                        {{ user_name|first|upper }}
+                                    </button>
+                                </div>
+                                <div class="actions-menu topbar-dropdown-menu" data-topbar-menu-panel>
+                                    <a href="{% url 'accounts:logout' %}" class="actions-link actions-link-danger">Sign out</a>
+                                </div>
+                            </div>
+                        {% endwith %}
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        <main class="content">
+            <header class="page-header">
+                <h1>{% block page_title %}WPC Map Clone{% endblock %}</h1>
+            </header>
+            {% if messages %}
+                <div class="message-stack">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script>
+        (function () {
+            const menu = document.querySelector('[data-topbar-menu]');
+            if (!menu) {
+                return;
+            }
+
+            const toggle = menu.querySelector('[data-topbar-menu-toggle]');
+            const panel = menu.querySelector('[data-topbar-menu-panel]');
+
+            function setOpen(isOpen) {
+                panel.classList.toggle('is-open', isOpen);
+                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+
+            toggle.addEventListener('click', function (event) {
+                event.stopPropagation();
+                setOpen(!panel.classList.contains('is-open'));
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!menu.contains(event.target)) {
+                    setOpen(false);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setOpen(false);
+                }
+            });
+        }());
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+
+
+
+
+
+
+

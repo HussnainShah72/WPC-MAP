@@ -1,0 +1,783 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}{{ page_title }} | WPC Map Clone{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <p class="section-subtitle">{{ page_subtitle }}</p>
+    </div>
+</section>
+
+<form method="post" class="facility-form-page" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+    {% endif %}
+
+    {% for hidden in form.hidden_fields %}
+        {{ hidden }}
+        {% for error in hidden.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    {% endfor %}
+
+    {% if form.errors %}
+        <div class="alert alert-error">
+            {% for field in form %}
+                {% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">Identity</h2>
+                <p class="section-subtitle">Core facility details and contact information.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid facility-form-grid-3">
+            <div class="form-field">
+                <label for="{{ form.name.id_for_label }}">Facility name</label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.facility_type.id_for_label }}">Type</label>
+                {{ form.facility_type }}
+                {% for error in form.facility_type.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.phone.id_for_label }}">Phone</label>
+                {{ form.phone }}
+                {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-2">
+                <label for="{{ form.address.id_for_label }}">Address</label>
+                {{ form.address }}
+                {% for error in form.address.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.postcode.id_for_label }}">Postcode</label>
+                {{ form.postcode }}
+                {% for error in form.postcode.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.suburb.id_for_label }}">Suburb</label>
+                {{ form.suburb }}
+                {% for error in form.suburb.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.state.id_for_label }}">State</label>
+                {{ form.state }}
+                {% for error in form.state.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-2">
+                <label for="{{ form.website.id_for_label }}">Website</label>
+                {{ form.website }}
+                {% for error in form.website.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-full">
+                <label for="{{ form.quick_notes.id_for_label }}">Quick notes</label>
+                {{ form.quick_notes }}
+                {% for error in form.quick_notes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">Placement</h2>
+                <p class="section-subtitle">Availability and program acceptance.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid">
+            <div class="form-field">
+                <label for="{{ form.status.id_for_label }}">Status</label>
+                {{ form.status }}
+                {% for error in form.status.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field checkbox-field">
+                <label for="{{ form.accepts_students.id_for_label }}">Accepts students</label>
+                <div class="checkbox-inline">{{ form.accepts_students }}</div>
+                {% for error in form.accepts_students.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-full">
+                <label>Program acceptance</label>
+                <div class="checkbox-group program-toggle-group">
+                    <ul>
+                        {% for checkbox in form.programs %}
+                            <li data-program-option="{{ checkbox.choice_label|upper }}">
+                                <label for="{{ checkbox.id_for_label }}">
+                                    <span>{{ checkbox.choice_label }}</span>
+                                    {{ checkbox.tag }}
+                                </label>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% for error in form.programs.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="program-detail-cards">
+            <section class="program-detail-card" data-program-panel="IS" hidden>
+                <div class="section-heading-row program-detail-card-header">
+                    <div>
+                        <h3 class="section-title">IS Program Details</h3>
+                        <p class="section-subtitle">Placement-specific details for the IS program.</p>
+                    </div>
+                </div>
+                <div class="facility-form-grid facility-form-grid-4">
+                    <div class="form-field">
+                        <label for="{{ form.is_current_students.id_for_label }}">IS Current students</label>
+                        {{ form.is_current_students }}
+                        {% for error in form.is_current_students.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.is_spots_available.id_for_label }}">IS Spots available</label>
+                        {{ form.is_spots_available }}
+                        {% for error in form.is_spots_available.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.is_last_placement.id_for_label }}">IS Last placement</label>
+                        {{ form.is_last_placement }}
+                        {% for error in form.is_last_placement.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.is_next_start.id_for_label }}">IS Next start</label>
+                        {{ form.is_next_start }}
+                        {% for error in form.is_next_start.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="program-detail-card" data-program-panel="AHA" hidden>
+                <div class="section-heading-row program-detail-card-header">
+                    <div>
+                        <h3 class="section-title">AHA Program Details</h3>
+                        <p class="section-subtitle">Placement-specific details for the AHA program.</p>
+                    </div>
+                </div>
+                <div class="facility-form-grid facility-form-grid-4">
+                    <div class="form-field">
+                        <label for="{{ form.aha_current_students.id_for_label }}">AHA Current students</label>
+                        {{ form.aha_current_students }}
+                        {% for error in form.aha_current_students.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.aha_spots_available.id_for_label }}">AHA Spots available</label>
+                        {{ form.aha_spots_available }}
+                        {% for error in form.aha_spots_available.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.aha_last_placement.id_for_label }}">AHA Last placement</label>
+                        {{ form.aha_last_placement }}
+                        {% for error in form.aha_last_placement.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label for="{{ form.aha_next_start.id_for_label }}">AHA Next start</label>
+                        {{ form.aha_next_start }}
+                        {% for error in form.aha_next_start.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">Schedule</h2>
+                <p class="section-subtitle">Orientation, start timing, and dynamic shifts.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid">
+            <div class="form-field">
+                <label for="{{ form.orientation_time.id_for_label }}">Orientation time</label>
+                {{ form.orientation_time }}
+                {% for error in form.orientation_time.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.start_time_day1.id_for_label }}">Start time day 1</label>
+                {{ form.start_time_day1 }}
+                {% for error in form.start_time_day1.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+        <div class="formset-block">
+            {{ shift_formset.management_form }}
+            {% if shift_formset.management_form.errors %}
+                <div class="alert alert-error">
+                    {% for field_name, errors in shift_formset.management_form.errors.items %}
+                        {% for error in errors %}<div>{{ field_name }}: {{ error }}</div>{% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if shift_formset.non_form_errors %}
+                <div class="alert alert-error">{% for error in shift_formset.non_form_errors %}<div>{{ error }}</div>{% endfor %}</div>
+            {% endif %}
+            <div class="formset-header">
+                <h3>Shifts</h3>
+                <button type="button" class="button-secondary" data-add-formset="shifts">Add shift</button>
+            </div>
+            <div class="formset-list" data-formset-list="shifts">
+                {% for shift_form in shift_formset %}
+                    <div class="formset-item shift-formset-item" data-shift-row>
+                        {% if shift_form.non_field_errors %}
+                            <div class="alert alert-error">{% for error in shift_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+                        {% endif %}
+                        {% for hidden in shift_form.hidden_fields %}
+                            {{ hidden }}
+                            {% for error in hidden.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        {% endfor %}
+                        <div class="shift-formset-item-header">
+                            <h4 class="shift-formset-title">Shift</h4>
+                        </div>
+                        <div class="shift-delete-field" hidden>
+                            {{ shift_form.DELETE }}
+                            {% for error in shift_form.DELETE.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                        <div class="facility-form-grid facility-form-grid-4">
+                            <div class="form-field">
+                                <label for="{{ shift_form.role.id_for_label }}">Role</label>
+                                {{ shift_form.role }}
+                                {% for error in shift_form.role.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ shift_form.program.id_for_label }}">Program</label>
+                                {{ shift_form.program }}
+                                {% for error in shift_form.program.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ shift_form.days.id_for_label }}">Days</label>
+                                {{ shift_form.days }}
+                                {% for error in shift_form.days.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ shift_form.time_range.id_for_label }}">Time range</label>
+                                {{ shift_form.time_range }}
+                                {% for error in shift_form.time_range.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field facility-grid-span-full">
+                                <label for="{{ shift_form.notes.id_for_label }}">Notes</label>
+                                {{ shift_form.notes }}
+                                {% for error in shift_form.notes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="shift-formset-item-footer">
+                            <button type="button" class="button-danger-outline shift-remove-button" data-remove-shift>Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <template data-empty-formset="shifts">
+                <div class="formset-item shift-formset-item" data-shift-row>
+                    {% with shift_form=shift_formset.empty_form %}
+                    {% for hidden in shift_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="shift-formset-item-header">
+                        <h4 class="shift-formset-title">Shift</h4>
+                    </div>
+                    <div class="shift-delete-field" hidden>
+                        {{ shift_form.DELETE }}
+                    </div>
+                    <div class="facility-form-grid facility-form-grid-4">
+                        <div class="form-field">
+                            <label for="{{ shift_form.role.id_for_label }}">Role</label>
+                            {{ shift_form.role }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ shift_form.program.id_for_label }}">Program</label>
+                            {{ shift_form.program }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ shift_form.days.id_for_label }}">Days</label>
+                            {{ shift_form.days }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ shift_form.time_range.id_for_label }}">Time range</label>
+                            {{ shift_form.time_range }}
+                        </div>
+                        <div class="form-field facility-grid-span-full">
+                            <label for="{{ shift_form.notes.id_for_label }}">Notes</label>
+                            {{ shift_form.notes }}
+                        </div>
+                    </div>
+                    <div class="shift-formset-item-footer">
+                        <button type="button" class="button-danger-outline shift-remove-button" data-remove-shift>Remove</button>
+                    </div>
+                    {% endwith %}
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">Compliance</h2>
+                <p class="section-subtitle">Orientation requirements, policies, parking, and requirement rules.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid">
+            <div class="form-field checkbox-field">
+                <label for="{{ form.orientation_required.id_for_label }}">Orientation required</label>
+                <div class="checkbox-inline">{{ form.orientation_required }}</div>
+                {% for error in form.orientation_required.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-full">
+                <label for="{{ form.uniform_policy.id_for_label }}">Uniform policy</label>
+                {{ form.uniform_policy }}
+                {% for error in form.uniform_policy.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field facility-grid-span-full">
+                <label for="{{ form.parking_info.id_for_label }}">Parking info</label>
+                {{ form.parking_info }}
+                {% for error in form.parking_info.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+        <div class="formset-block">
+            {{ requirement_formset.management_form }}
+            {% if requirement_formset.management_form.errors %}
+                <div class="alert alert-error">
+                    {% for field_name, errors in requirement_formset.management_form.errors.items %}
+                        {% for error in errors %}<div>{{ field_name }}: {{ error }}</div>{% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if requirement_formset.non_form_errors %}
+                <div class="alert alert-error">{% for error in requirement_formset.non_form_errors %}<div>{{ error }}</div>{% endfor %}</div>
+            {% endif %}
+            <div class="formset-header">
+                <h3>Requirements</h3>
+                <button type="button" class="button-secondary" data-add-formset="requirements">Add requirement</button>
+            </div>
+            <div class="formset-list" data-formset-list="requirements">
+                {% for requirement_form in requirement_formset %}
+                    <div class="formset-item requirement-formset-item" data-requirement-row>
+                        {% if requirement_form.non_field_errors %}
+                            <div class="alert alert-error">{% for error in requirement_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+                        {% endif %}
+                        {% for hidden in requirement_form.hidden_fields %}
+                            {{ hidden }}
+                            {% for error in hidden.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        {% endfor %}
+                        <div class="requirement-formset-item-header">
+                            <h4 class="requirement-formset-title">Requirement</h4>
+                        </div>
+                        <div class="requirement-delete-field" hidden>
+                            {{ requirement_form.DELETE }}
+                            {% for error in requirement_form.DELETE.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                        <div class="facility-form-grid facility-form-grid-4">
+                            <div class="form-field facility-grid-span-2">
+                                <label for="{{ requirement_form.requirement_name.id_for_label }}">Type</label>
+                                {{ requirement_form.requirement_name }}
+                                {% for error in requirement_form.requirement_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field checkbox-field">
+                                <label for="{{ requirement_form.mandatory.id_for_label }}">Mandatory</label>
+                                <div class="checkbox-inline">{{ requirement_form.mandatory }}</div>
+                                {% for error in requirement_form.mandatory.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field facility-grid-span-full">
+                                <label>Programs this requirement applies to</label>
+                                <div class="checkbox-group">{{ requirement_form.programs }}</div>
+                                {% for error in requirement_form.programs.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field facility-grid-span-full">
+                                <label for="{{ requirement_form.notes.id_for_label }}">Notes</label>
+                                {{ requirement_form.notes }}
+                                {% for error in requirement_form.notes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="requirement-formset-item-footer">
+                            <button type="button" class="button-danger-outline requirement-remove-button" data-remove-requirement>Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <template data-empty-formset="requirements">
+                <div class="formset-item requirement-formset-item" data-requirement-row>
+                    {% with requirement_form=requirement_formset.empty_form %}
+                    {% for hidden in requirement_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="requirement-formset-item-header">
+                        <h4 class="requirement-formset-title">Requirement</h4>
+                    </div>
+                    <div class="requirement-delete-field" hidden>
+                        {{ requirement_form.DELETE }}
+                    </div>
+                    <div class="facility-form-grid facility-form-grid-4">
+                        <div class="form-field facility-grid-span-2">
+                            <label for="{{ requirement_form.requirement_name.id_for_label }}">Type</label>
+                            {{ requirement_form.requirement_name }}
+                        </div>
+                        <div class="form-field checkbox-field">
+                            <label for="{{ requirement_form.mandatory.id_for_label }}">Mandatory</label>
+                            <div class="checkbox-inline">{{ requirement_form.mandatory }}</div>
+                        </div>
+                        <div class="form-field facility-grid-span-full">
+                            <label>Programs this requirement applies to</label>
+                            <div class="checkbox-group">{{ requirement_form.programs }}</div>
+                        </div>
+                        <div class="form-field facility-grid-span-full">
+                            <label for="{{ requirement_form.notes.id_for_label }}">Notes</label>
+                            {{ requirement_form.notes }}
+                        </div>
+                    </div>
+                    <div class="requirement-formset-item-footer">
+                        <button type="button" class="button-danger-outline requirement-remove-button" data-remove-requirement>Remove</button>
+                    </div>
+                    {% endwith %}
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">Geo</h2>
+                <p class="section-subtitle">Coordinates and verification details.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid facility-form-grid-4">
+            <div class="form-field facility-grid-span-full">
+                <label for="{{ form.geo_raw.id_for_label }}">Raw coordinates</label>
+                {{ form.geo_raw }}
+                {% for error in form.geo_raw.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                {{ form.latitude }}
+                {% for error in form.latitude.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.longitude.id_for_label }}">Longitude</label>
+                {{ form.longitude }}
+                {% for error in form.longitude.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.geo_accuracy.id_for_label }}">Accuracy</label>
+                {{ form.geo_accuracy }}
+                {% for error in form.geo_accuracy.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field checkbox-field">
+                <label for="{{ form.geo_verified.id_for_label }}">Verified</label>
+                <div class="checkbox-inline">{{ form.geo_verified }}</div>
+                {% for error in form.geo_verified.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="panel facility-section">
+        <div class="section-heading-row">
+            <div>
+                <h2 class="section-title">People &amp; Admin</h2>
+                <p class="section-subtitle">Administrative flags and key facility contacts.</p>
+            </div>
+        </div>
+        <div class="facility-form-grid">
+            <div class="form-field checkbox-field">
+                <label for="{{ form.mou_complete.id_for_label }}">MOU complete</label>
+                <div class="checkbox-inline">{{ form.mou_complete }}</div>
+                {% for error in form.mou_complete.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field checkbox-field">
+                <label for="{{ form.contacted_recently.id_for_label }}">Contacted recently</label>
+                <div class="checkbox-inline">{{ form.contacted_recently }}</div>
+                {% for error in form.contacted_recently.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+        <div class="formset-block">
+            {{ contact_formset.management_form }}
+            {% if contact_formset.management_form.errors %}
+                <div class="alert alert-error">
+                    {% for field_name, errors in contact_formset.management_form.errors.items %}
+                        {% for error in errors %}<div>{{ field_name }}: {{ error }}</div>{% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if contact_formset.non_form_errors %}
+                <div class="alert alert-error">{% for error in contact_formset.non_form_errors %}<div>{{ error }}</div>{% endfor %}</div>
+            {% endif %}
+            <div class="formset-header">
+                <h3>Contacts</h3>
+                <button type="button" class="button-secondary" data-add-formset="contacts">Add contact</button>
+            </div>
+            <div class="formset-list" data-formset-list="contacts">
+                {% for contact_form in contact_formset %}
+                    <div class="formset-item contact-formset-item" data-contact-row>
+                        {% if contact_form.non_field_errors %}
+                            <div class="alert alert-error">{% for error in contact_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+                        {% endif %}
+                        {% for hidden in contact_form.hidden_fields %}
+                            {{ hidden }}
+                            {% for error in hidden.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        {% endfor %}
+                        <div class="contact-formset-item-header">
+                            <h4 class="contact-formset-title">Contact</h4>
+                        </div>
+                        <div class="contact-delete-field" hidden>
+                            {{ contact_form.DELETE }}
+                            {% for error in contact_form.DELETE.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                        <div class="facility-form-grid facility-form-grid-4">
+                            <div class="form-field">
+                                <label for="{{ contact_form.role.id_for_label }}">Role</label>
+                                {{ contact_form.role }}
+                                {% for error in contact_form.role.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ contact_form.name.id_for_label }}">Name</label>
+                                {{ contact_form.name }}
+                                {% for error in contact_form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ contact_form.email.id_for_label }}">Email</label>
+                                {{ contact_form.email }}
+                                {% for error in contact_form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field">
+                                <label for="{{ contact_form.phone.id_for_label }}">Phone</label>
+                                {{ contact_form.phone }}
+                                {% for error in contact_form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="form-field facility-grid-span-full">
+                                <label>Programs</label>
+                                <div class="checkbox-group">{{ contact_form.programs }}</div>
+                                {% for error in contact_form.programs.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="contact-formset-item-footer">
+                            <button type="button" class="button-danger-outline contact-remove-button" data-remove-contact>Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <template data-empty-formset="contacts">
+                <div class="formset-item contact-formset-item" data-contact-row>
+                    {% with contact_form=contact_formset.empty_form %}
+                    {% for hidden in contact_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="contact-formset-item-header">
+                        <h4 class="contact-formset-title">Contact</h4>
+                    </div>
+                    <div class="contact-delete-field" hidden>
+                        {{ contact_form.DELETE }}
+                    </div>
+                    <div class="facility-form-grid facility-form-grid-4">
+                        <div class="form-field">
+                            <label for="{{ contact_form.role.id_for_label }}">Role</label>
+                            {{ contact_form.role }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ contact_form.name.id_for_label }}">Name</label>
+                            {{ contact_form.name }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ contact_form.email.id_for_label }}">Email</label>
+                            {{ contact_form.email }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ contact_form.phone.id_for_label }}">Phone</label>
+                            {{ contact_form.phone }}
+                        </div>
+                        <div class="form-field facility-grid-span-full">
+                            <label>Programs</label>
+                            <div class="checkbox-group">{{ contact_form.programs }}</div>
+                        </div>
+                    </div>
+                    <div class="contact-formset-item-footer">
+                        <button type="button" class="button-danger-outline contact-remove-button" data-remove-contact>Remove</button>
+                    </div>
+                    {% endwith %}
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <div class="inline-actions facility-form-actions">
+        <a href="{{ cancel_url }}" class="button-secondary">Cancel</a>
+        <button type="submit" class="button-primary">Save</button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        function addFormsetRow(prefix) {
+            const totalInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+            const list = document.querySelector('[data-formset-list="' + prefix + '"]');
+            const template = document.querySelector('[data-empty-formset="' + prefix + '"]');
+
+            if (!totalInput || !list || !template) {
+                return;
+            }
+
+            const index = Number(totalInput.value);
+            const html = template.innerHTML.replace(/__prefix__/g, index);
+            list.insertAdjacentHTML('beforeend', html);
+            totalInput.value = index + 1;
+
+            if (prefix === 'shifts') {
+                refreshShiftRows();
+            }
+            if (prefix === 'requirements') {
+                refreshRequirementRows();
+            }
+            if (prefix === 'contacts') {
+                refreshContactRows();
+            }
+        }
+
+        function syncProgramDetailCards() {
+            document.querySelectorAll('[data-program-option]').forEach((option) => {
+                const programName = (option.dataset.programOption || '').toUpperCase();
+                const input = option.querySelector('input[type="checkbox"]');
+                const panel = document.querySelector('[data-program-panel="' + programName + '"]');
+
+                if (!input || !panel) {
+                    return;
+                }
+
+                panel.hidden = !input.checked;
+            });
+        }
+
+        function updateFormsetRowIndex(row, index, prefix) {
+            const pattern = new RegExp(prefix + '-(\\d+|__prefix__)-', 'g');
+            row.querySelectorAll('input, select, textarea, label').forEach((element) => {
+                ['name', 'id', 'for'].forEach((attribute) => {
+                    const value = element.getAttribute(attribute);
+                    if (!value) {
+                        return;
+                    }
+                    element.setAttribute(attribute, value.replace(pattern, prefix + '-' + index + '-'));
+                });
+            });
+        }
+
+        function refreshShiftRows() {
+            const list = document.querySelector('[data-formset-list="shifts"]');
+            const totalInput = document.getElementById('id_shifts-TOTAL_FORMS');
+            if (!list || !totalInput) {
+                return;
+            }
+
+            const rows = Array.from(list.querySelectorAll('[data-shift-row]'));
+            rows.forEach((row, index) => {
+                updateFormsetRowIndex(row, index, 'shifts');
+                const title = row.querySelector('.shift-formset-title');
+                if (title) {
+                    title.textContent = 'Shift ' + (index + 1);
+                }
+            });
+            totalInput.value = rows.length;
+        }
+
+        function refreshRequirementRows() {
+            const list = document.querySelector('[data-formset-list="requirements"]');
+            const totalInput = document.getElementById('id_requirements-TOTAL_FORMS');
+            if (!list || !totalInput) {
+                return;
+            }
+
+            const rows = Array.from(list.querySelectorAll('[data-requirement-row]'));
+            rows.forEach((row, index) => {
+                updateFormsetRowIndex(row, index, 'requirements');
+                const title = row.querySelector('.requirement-formset-title');
+                if (title) {
+                    title.textContent = 'Requirement ' + (index + 1);
+                }
+            });
+            totalInput.value = rows.length;
+        }
+
+        function refreshContactRows() {
+            const list = document.querySelector('[data-formset-list="contacts"]');
+            const totalInput = document.getElementById('id_contacts-TOTAL_FORMS');
+            if (!list || !totalInput) {
+                return;
+            }
+
+            const rows = Array.from(list.querySelectorAll('[data-contact-row]'));
+            rows.forEach((row, index) => {
+                updateFormsetRowIndex(row, index, 'contacts');
+                const title = row.querySelector('.contact-formset-title');
+                if (title) {
+                    title.textContent = 'Contact ' + (index + 1);
+                }
+            });
+            totalInput.value = rows.length;
+        }
+
+        function removeFormsetRow(button, rowSelector, refreshCallback) {
+            const row = button.closest(rowSelector);
+            if (!row) {
+                return;
+            }
+
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+            const idInput = row.querySelector('input[name$="-id"]');
+            const isSavedRow = Boolean(idInput && idInput.value);
+
+            if (isSavedRow && deleteInput) {
+                deleteInput.checked = true;
+                row.hidden = true;
+                row.classList.add('is-marked-for-deletion');
+                return;
+            }
+
+            row.remove();
+            refreshCallback();
+        }
+
+        document.querySelectorAll('[data-add-formset]').forEach((button) => {
+            button.addEventListener('click', function () {
+                addFormsetRow(this.dataset.addFormset);
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            const removeShiftButton = event.target.closest('[data-remove-shift]');
+            if (removeShiftButton) {
+                removeFormsetRow(removeShiftButton, '[data-shift-row]', refreshShiftRows);
+                return;
+            }
+
+            const removeRequirementButton = event.target.closest('[data-remove-requirement]');
+            if (removeRequirementButton) {
+                removeFormsetRow(removeRequirementButton, '[data-requirement-row]', refreshRequirementRows);
+                return;
+            }
+
+            const removeContactButton = event.target.closest('[data-remove-contact]');
+            if (removeContactButton) {
+                removeFormsetRow(removeContactButton, '[data-contact-row]', refreshContactRows);
+            }
+        });
+
+        document.querySelectorAll('[data-program-option] input[type="checkbox"]').forEach((checkbox) => {
+            checkbox.addEventListener('change', syncProgramDetailCards);
+        });
+
+        syncProgramDetailCards();
+        refreshShiftRows();
+        refreshRequirementRows();
+        refreshContactRows();
+    }());
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

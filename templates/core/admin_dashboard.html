@@ -1,0 +1,85 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}Admin Panel | WPC Map Clone{% endblock %}
+{% block page_title %}Admin Panel{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <p class="section-subtitle">Manage users and system access permissions</p>
+    </div>
+    <div class="count-badge">{{ total_user_count }} users</div>
+</section>
+
+<section class="panel admin-section">
+    <div class="section-heading-row">
+        <div>
+            <h2 class="section-title">Add New User</h2>
+            <p class="section-subtitle">Create or update an approved signup entry for staff access.</p>
+        </div>
+    </div>
+
+    <form method="post" class="stack-form" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+
+        <div class="admin-form-grid">
+            <div class="form-field">
+                <label for="{{ form.email.id_for_label }}">Email Address</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.role.id_for_label }}">Role</label>
+                {{ form.role }}
+                {% for error in form.role.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="button-primary admin-button">Add User</button>
+    </form>
+</section>
+
+<section class="panel admin-section">
+    <div class="section-heading-row">
+        <div>
+            <h2 class="section-title">User Management</h2>
+            <p class="section-subtitle">Current invitations and registered users with access to the system.</p>
+        </div>
+    </div>
+
+    {% if access_entries %}
+        <div class="admin-card-list">
+            {% for entry in access_entries %}
+                <article class="access-card">
+                    <div class="access-card-main">
+                        <div>
+                            <h3 class="access-email">{{ entry.record.email }}</h3>
+                            <p class="access-meta">Added {{ entry.record.created_at|date:"d M Y" }}</p>
+                        </div>
+                        <div class="access-badges">
+                            <span class="role-badge role-{{ entry.record.role }}">{{ entry.record.get_role_display }}</span>
+                            {% if entry.is_registered %}
+                                <span class="status-chip">Registered</span>
+                            {% else %}
+                                <span class="status-chip status-chip-muted">Invitation</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="access-card-actions">
+                        <a class="button-secondary" href="{% url 'core_admin:edit_access' entry.record.pk %}">Edit</a>
+                        <a class="button-danger" href="{% url 'core_admin:delete_access' entry.record.pk %}">Delete</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No users or invitations have been added yet.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

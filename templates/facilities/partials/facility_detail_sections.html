@@ -1,0 +1,90 @@
+<div class="facility-detail-sections">
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Overview</h3>
+        <div class="detail-group"><span class="detail-label">Address</span><p>{{ address_text }}</p></div>
+        <div class="detail-group"><span class="detail-label">Phone</span><p>{{ facility.phone|default:"-" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Website</span>{% if facility.website %}<p><a href="{{ facility.website }}" class="detail-link" target="_blank" rel="noreferrer">{{ facility.website }}</a></p>{% else %}<p>-</p>{% endif %}</div>
+        <div class="detail-group"><span class="detail-label">Quick Notes</span><p>{{ facility.quick_notes|default:"No quick notes yet." }}</p></div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Compliance</h3>
+        <div class="detail-group"><span class="detail-label">Orientation Required</span><p>{{ facility.orientation_required|yesno:"Yes,No" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Uniform Policy</span><p>{{ facility.uniform_policy|default:"-" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Parking Info</span><p>{{ facility.parking_info|default:"-" }}</p></div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Requirements</h3>
+        <div class="detail-list">
+            {% for item in facility.facility_requirements.all %}
+                <div class="detail-list-item">
+                    <strong>{{ item.requirement.name }}</strong>
+                    <span>
+                        {{ item.mandatory|yesno:"Mandatory,Optional" }}
+                        {% with requirement_programs=item.programs.all %}
+                            {% if requirement_programs %}
+                                - {% for program in requirement_programs %}{{ program.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            {% elif item.program %}
+                                - {{ item.program.name }}
+                            {% endif %}
+                        {% endwith %}
+                        {% if item.notes %} - {{ item.notes }}{% endif %}
+                    </span>
+                </div>
+            {% empty %}
+                <p>-</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Placement</h3>
+        <div class="detail-group"><span class="detail-label">Status</span><p>{{ facility.get_status_display }}</p></div>
+        <div class="detail-group"><span class="detail-label">Accepts Students</span><p>{{ facility.accepts_students|yesno:"Yes,No" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Program Acceptance</span><div class="badge-group">{% for program in facility.programs.all %}<span class="soft-badge">{{ program.name }}</span>{% empty %}<span class="muted-text">-</span>{% endfor %}</div></div>
+        <div class="detail-group"><span class="detail-label">Spots</span><p>{{ facility.spots }}</p></div>
+        <div class="detail-group"><span class="detail-label">Next Start</span><p>{{ facility.next_start|date:"d M Y"|default:"-" }}</p></div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Placement Schedule</h3>
+        <div class="detail-group"><span class="detail-label">Orientation Time</span><p>{{ facility.orientation_time|time:"H:i"|default:"-" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Start Time Day 1</span><p>{{ facility.start_time_day1|time:"H:i"|default:"-" }}</p></div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Shifts</h3>
+        <div class="detail-list">
+            {% for shift in facility.shifts.all %}
+                <div class="detail-list-item">
+                    <strong>{{ shift.days }} - {{ shift.time_range }}</strong>
+                    <span>{% if shift.role %}{{ shift.role }}{% else %}General{% endif %}{% if shift.program %} - {{ shift.program.name }}{% endif %}{% if shift.notes %} - {{ shift.notes }}{% endif %}</span>
+                </div>
+            {% empty %}
+                <p>-</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Last Contact</h3>
+        <div class="detail-group"><span class="detail-label">Contacted Recently</span><p>{{ facility.contacted_recently|yesno:"Yes,No" }}</p></div>
+        <div class="detail-group"><span class="detail-label">Last Updated</span><p>{{ facility.updated_at|date:"d M Y, H:i" }}</p></div>
+    </section>
+
+    <section class="panel facility-modal-section">
+        <h3 class="section-title">Contacts</h3>
+        <div class="detail-list">
+            {% for contact in facility.contacts.all %}
+                <div class="detail-list-item">
+                    <strong>{{ contact.name }}</strong>
+                    <span>{% if contact.role %}{{ contact.role }}{% endif %}{% if contact.email %} - {{ contact.email }}{% endif %}{% if contact.phone %} - {{ contact.phone }}{% endif %}</span>
+                    <div class="badge-group">{% for program in contact.programs.all %}<span class="soft-badge">{{ program.name }}</span>{% endfor %}</div>
+                </div>
+            {% empty %}
+                <p>-</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>

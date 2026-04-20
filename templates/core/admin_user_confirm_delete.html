@@ -1,0 +1,30 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}{{ page_title }} | WPC Map Clone{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <p class="section-subtitle">{{ subtitle }}</p>
+    </div>
+</section>
+
+<section class="panel admin-section admin-form-panel">
+    <div class="delete-summary">
+        <h2 class="section-title">{{ access_record.email }}</h2>
+        <p class="section-subtitle">Role: {{ access_record.get_role_display }}</p>
+        {% if linked_user %}
+            <p class="delete-warning">This person has already registered. Deleting will remove both the access record and the user account.</p>
+        {% else %}
+            <p class="delete-warning">This will remove the invitation record for this email address.</p>
+        {% endif %}
+    </div>
+
+    <form method="post" class="inline-actions">
+        {% csrf_token %}
+        <button type="submit" class="button-danger">Delete</button>
+        <a class="button-secondary" href="{{ cancel_url }}">Cancel</a>
+    </form>
+</section>
+{% endblock %}

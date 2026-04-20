@@ -1,0 +1,192 @@
+{% extends "base_authenticated.html" %}
+{% load static %}
+
+{% block title %}Facilities | WPC Map Clone{% endblock %}
+{% block page_title %}Facilities{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <p class="section-subtitle">Browse placement facilities, filter the list, and open full facility details from the table.</p>
+    </div>
+    <div class="count-badge">{{ facility_count }} facilities</div>
+</section>
+
+<section class="panel facilities-section">
+    <form method="get" class="facilities-toolbar" novalidate>
+        <div class="facilities-toolbar-grid">
+            <div class="form-field toolbar-search">
+                <label for="{{ filter_form.q.id_for_label }}">Search</label>
+                {{ filter_form.q }}
+            </div>
+            <div class="form-field">
+                <label for="{{ filter_form.status.id_for_label }}">Status</label>
+                {{ filter_form.status }}
+            </div>
+            <div class="form-field">
+                <label for="{{ filter_form.facility_type.id_for_label }}">Type</label>
+                {{ filter_form.facility_type }}
+            </div>
+        </div>
+        <div class="facilities-toolbar-actions">
+            <button type="submit" class="button-secondary">Apply Filters</button>
+            <a href="{% url 'facilities:list' %}" class="button-secondary">Reset</a>
+            {% if app_perms.can_manage_facilities %}
+                <a href="{% url 'facilities:create' %}" class="button-primary">Add Facility</a>
+            {% else %}
+                <span class="button-secondary is-disabled" aria-disabled="true">Add Facility</span>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<section class="panel facilities-list-shell" data-facility-detail-root data-detail-endpoint-template="{% url 'facilities:detail_fragments' 999999 %}">
+    <div class="facilities-table-wrap">
+        {% if facilities %}
+            <table class="facilities-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" aria-label="Select all facilities"></th>
+                        <th><a href="{{ sort_urls.name }}" class="sort-link">Name</a></th>
+                        <th><a href="{{ sort_urls.type }}" class="sort-link">Type</a></th>
+                        <th><a href="{{ sort_urls.suburb }}" class="sort-link">Suburb</a></th>
+                        <th>Programs</th>
+                        <th>Status</th>
+                        <th>Spots</th>
+                        <th>Next start</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for facility in facilities %}
+                        <tr class="facility-row" tabindex="0" data-facility-id="{{ facility.pk }}">
+                            <td><input type="checkbox" aria-label="Select {{ facility.name }}"></td>
+                            <td class="facility-name-cell">{{ facility.name }}</td>
+                            <td>{{ facility.get_facility_type_display }}</td>
+                            <td>{{ facility.suburb|default:"-" }}</td>
+                            <td>
+                                <div class="badge-group">
+                                    {% for program in facility.programs.all %}
+                                        <span class="soft-badge">{{ program.name }}</span>
+                                    {% empty %}
+                                        <span class="muted-text">-</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td><span class="status-pill status-{{ facility.status }}">{{ facility.get_status_display }}</span></td>
+                            <td><span class="number-badge">{{ facility.spots }}</span></td>
+                            <td>{{ facility.next_start|date:"d M Y"|default:"-" }}</td>
+                            <td>
+                                {% if app_perms.can_manage_facilities or app_perms.can_delete_facilities %}
+                                    <div class="row-actions" data-actions-root>
+                                        <button type="button" class="actions-toggle" data-actions-toggle aria-label="Open actions for {{ facility.name }}">Actions</button>
+                                        <div class="actions-menu" data-actions-menu>
+                                            <button type="button" class="actions-link" data-open-facility-detail data-facility-id="{{ facility.pk }}">View</button>
+                                            {% if app_perms.can_manage_facilities %}
+                                                <a href="{% url 'facilities:edit' facility.pk %}" class="actions-link">Edit</a>
+                                            {% endif %}
+                                            {% if app_perms.can_delete_facilities %}
+                                                <a href="{% url 'facilities:delete' facility.pk %}" class="actions-link actions-link-danger">Delete</a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="actions-link" data-open-facility-detail data-facility-id="{{ facility.pk }}">View</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>No facilities match the current filters.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% include "facilities/partials/facility_detail_shell.html" with shell_class="facilities-modal-only-shell" panel_class="facilities-hidden-panel-slot" show_placeholder=False %}
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/facility-details.js' %}"></script>
+<script>
+    (function () {
+        const root = document.querySelector('.facilities-list-shell[data-facility-detail-root]');
+        if (!root || !window.WpcFacilityDetails) {
+            return;
+        }
+
+        const rows = root.querySelectorAll('.facility-row');
+        const actionToggles = root.querySelectorAll('[data-actions-toggle]');
+        const viewButtons = root.querySelectorAll('[data-open-facility-detail]');
+        const placeholder = root.querySelector('[data-facility-panel-slot]').innerHTML;
+
+        function closeMenus() {
+            root.querySelectorAll('[data-actions-menu]').forEach(function (menu) {
+                menu.classList.remove('is-open');
+            });
+        }
+
+        const controller = window.WpcFacilityDetails.createController({
+            root: root,
+            endpointTemplate: root.dataset.detailEndpointTemplate.replace('999999', '__id__'),
+            placeholderHtml: placeholder,
+        });
+
+        async function openFacilityModal(facilityId) {
+            if (!controller || !facilityId) {
+                return;
+            }
+            await controller.openById(facilityId);
+            const modalOpenButton = root.querySelector('[data-open-facility-modal]');
+            if (modalOpenButton) {
+                modalOpenButton.click();
+            }
+        }
+
+        rows.forEach(function (row) {
+            row.addEventListener('click', function (event) {
+                if (event.target.closest('[data-actions-root]') || event.target.type === 'checkbox') {
+                    return;
+                }
+                openFacilityModal(row.dataset.facilityId);
+            });
+
+            row.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openFacilityModal(row.dataset.facilityId);
+                }
+            });
+        });
+
+        viewButtons.forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.stopPropagation();
+                closeMenus();
+                openFacilityModal(button.dataset.facilityId);
+            });
+        });
+
+        actionToggles.forEach(function (toggle) {
+            toggle.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const menu = toggle.parentElement.querySelector('[data-actions-menu]');
+                const isOpen = menu.classList.contains('is-open');
+                closeMenus();
+                if (!isOpen) {
+                    menu.classList.add('is-open');
+                }
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('[data-actions-root]')) {
+                closeMenus();
+            }
+        });
+    }());
+</script>
+{% endblock %}

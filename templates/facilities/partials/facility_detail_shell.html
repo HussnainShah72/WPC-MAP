@@ -1,0 +1,20 @@
+<div class="facility-detail-shell {{ shell_class|default:'' }}">
+    <div class="facility-panel-slot {{ panel_class|default:'' }}" data-facility-panel-slot>
+        {% if show_placeholder == False %}
+        {% else %}
+            <aside class="detail-drawer facility-detail-placeholder">
+                <div class="detail-drawer-header">
+                    <div>
+                        <p class="drawer-eyebrow">Facility Detail</p>
+                        <h2>Select a facility</h2>
+                        <p class="section-subtitle">Choose a facility from the map or list to load full detail.</p>
+                    </div>
+                </div>
+            </aside>
+        {% endif %}
+    </div>
+    <div class="facility-modal-shell" data-facility-modal-shell hidden>
+        <div class="facility-modal-backdrop" data-close-facility-modal></div>
+        <div class="facility-modal-content" data-facility-modal-content></div>
+    </div>
+</div>

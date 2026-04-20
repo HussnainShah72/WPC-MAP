@@ -1,0 +1,31 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}Delete Facility | WPC Map Clone{% endblock %}
+{% block page_title %}Delete Facility{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <p class="section-subtitle">This action permanently removes the facility record and its related shifts, contacts, and requirements.</p>
+    </div>
+</section>
+
+<section class="panel admin-section admin-form-panel">
+    <div class="delete-summary">
+        <h2 class="section-title">{{ facility.name }}</h2>
+        <div class="badge-group">
+            <span class="soft-badge">{{ facility.get_facility_type_display }}</span>
+            <span class="status-pill status-{{ facility.status }}">{{ facility.get_status_display }}</span>
+            <span class="number-badge">{{ facility.spots }} spots</span>
+        </div>
+        <p class="section-subtitle">{{ facility.address|default:"Address not set" }}{% if facility.suburb %}, {{ facility.suburb }}{% endif %}{% if facility.state %}, {{ facility.state }}{% endif %}</p>
+        <p class="delete-warning">Deleting this facility cannot be undone.</p>
+    </div>
+
+    <form method="post" class="inline-actions">
+        {% csrf_token %}
+        <button type="submit" class="button-danger">Delete Facility</button>
+        <a href="{{ cancel_url }}" class="button-secondary">Cancel</a>
+    </form>
+</section>
+{% endblock %}
