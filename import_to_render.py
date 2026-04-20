@@ -47,15 +47,19 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     suburb = clean(row[1])
     lat, lon = get_coords(suburb)
     
+    # Truncate to 120 chars to fit database limits
+    name_truncated = name[:120]
+    suburb_truncated = suburb[:120]
+    
     facility, created = Facility.objects.get_or_create(
-        name=name,
-        suburb=suburb,
+        name=name_truncated,
+        suburb=suburb_truncated,
         defaults={
             "facility_type": "aged_care",
             "latitude": lat,
             "longitude": lon,
             "status": infer_status(row[8], row[10]),
-            "phone": clean(row[6]) or clean(row[7]),
+            "phone": (clean(row[6]) or clean(row[7]))[:20],
             "address": clean(row[5]),
             "quick_notes": f"{clean(row[8])}\n{clean(row[10])}".strip()
         }
